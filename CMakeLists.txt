@@ -9,7 +9,6 @@ set (etcd-cpp-api_VERSION_MINOR 1)
 
 enable_testing()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 
 add_subdirectory(src)

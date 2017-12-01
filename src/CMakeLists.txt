@@ -1,6 +1,8 @@
 add_library(etcd-cpp-api SHARED Client.cpp Response.cpp Value.cpp json_constants.cpp)
 set_property(TARGET etcd-cpp-api PROPERTY CXX_STANDARD 11)
 
+target_include_directories(etcd-cpp-api PUBLIC ..)
+
 target_link_libraries(etcd-cpp-api ${CPPREST_LIB} ${Boost_LIBRARIES} ssl crypto)
 
 install (TARGETS etcd-cpp-api DESTINATION lib)
