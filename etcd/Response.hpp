@@ -77,7 +77,7 @@ namespace etcd
     std::string const & key(int index) const;
 
   protected:
-    Response(web::http::http_response http_response, web::json::value json_value);
+    Response(int index, web::json::value json_value);
 
     int         _error_code;
     std::string _error_message;

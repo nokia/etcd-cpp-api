@@ -22,6 +22,12 @@ namespace etcd
     Client(std::string const & etcd_url);
 
     /**
+     * Destructs the etcd client object.
+     * Will cancel all outstanding tasks.
+     */
+    ~Client();
+
+    /**
      * Sends a get request to the etcd server
      * @param key is the key to be read
      */
@@ -125,6 +131,11 @@ namespace etcd
      */
     pplx::task<Response> watch(std::string const & key, int fromIndex, bool recursive = false);
 
+    /**
+     * Cancels all outstanding tasks.
+     */
+    void cancel();
+
   protected:
 
     pplx::task<Response> send_get_request(web::http::uri_builder & uri);
@@ -132,6 +143,9 @@ namespace etcd
     pplx::task<Response> send_put_request(web::http::uri_builder & uri, std::string const & key, std::string const & value);
 
     web::http::client::http_client client;
+
+  private:
+    pplx::cancellation_token_source _cts;
   };
 }
 
