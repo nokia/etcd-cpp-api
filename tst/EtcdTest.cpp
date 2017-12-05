@@ -249,3 +249,11 @@ TEST_CASE("cleanup")
   etcd::Client etcd("http://127.0.0.1:4001");
   REQUIRE(0 == etcd.rmdir("/test", true).get().error_code());
 }
+
+TEST_CASE("auto cancel watch tasks on exit")
+{
+  // watch for a non existing key should never return
+  etcd::Client etcd("http://127.0.0.1:4001");
+  pplx::task<etcd::Response> res = etcd.watch("/noexist");
+  CHECK(!res.is_done());
+}
