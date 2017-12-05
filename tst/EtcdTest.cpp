@@ -255,5 +255,6 @@ TEST_CASE("auto cancel watch tasks on exit")
   // watch for a non existing key should never return
   etcd::Client etcd("http://127.0.0.1:4001");
   pplx::task<etcd::Response> res = etcd.watch("/noexist");
+  sleep(1);
   CHECK(!res.is_done());
 }
