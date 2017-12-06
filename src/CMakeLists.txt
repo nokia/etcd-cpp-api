@@ -1,4 +1,4 @@
-add_library(etcd-cpp-api SHARED Client.cpp Response.cpp Value.cpp json_constants.cpp)
+add_library(etcd-cpp-api SHARED Client.cpp Response.cpp Value.cpp json_constants.cpp Watcher.cpp)
 set_property(TARGET etcd-cpp-api PROPERTY CXX_STANDARD 11)
 
 target_include_directories(etcd-cpp-api PUBLIC ..)
@@ -9,4 +9,5 @@ install (TARGETS etcd-cpp-api DESTINATION lib)
 install (FILES ../etcd/Client.hpp
                ../etcd/Response.hpp
                ../etcd/Value.hpp
+               ../etcd/Watcher.hpp
                DESTINATION include/etcd)
