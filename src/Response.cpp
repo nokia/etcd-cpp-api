@@ -4,16 +4,16 @@
 pplx::task<etcd::Response> etcd::Response::create(pplx::task<web::http::http_response> response_task)
 {
   return pplx::task<etcd::Response> ([response_task](){
-      int index = 0;
+      std::shared_ptr<int> index = std::make_shared<int>(0);
       return response_task
-        .then([&index](web::http::http_response http_response){
+        .then([index](web::http::http_response http_response){
             if (http_response.headers().has(JSON_ETCD_INDEX)) {
-              index = atoi(http_response.headers()[JSON_ETCD_INDEX].c_str());
+              *index = atoi(http_response.headers()[JSON_ETCD_INDEX].c_str());
             }
             return http_response.extract_json();
           })
-        .then([&index](web::json::value json_value){
-            return etcd::Response(index, json_value);
+        .then([index](web::json::value json_value){
+            return etcd::Response(*index, json_value);
           });
     });
 }
