@@ -13,6 +13,12 @@ public:
           std::function<void(etcd::Response)> callback,
           bool recursive = false);
 
+  Watcher(std::string const& address,
+          std::string const& key,
+          int from_index,
+          std::function<void(etcd::Response)> callback,
+          bool recursive = false);
+
   ~Watcher();
 
   void cancel();
