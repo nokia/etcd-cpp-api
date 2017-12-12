@@ -3,15 +3,17 @@
 
 #include "etcd/Client.hpp"
 
+std::string etcd_server("http://etcd-server:4001");
+
 TEST_CASE("setup")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   etcd.rmdir("/test", true).wait();
 }
 
 TEST_CASE("add a new key")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   etcd::Response resp = etcd.add("/test/key1", "42").get();
   REQUIRE(0 == resp.error_code());
   CHECK("create" == resp.action());
@@ -29,7 +31,7 @@ TEST_CASE("add a new key")
 
 TEST_CASE("read a value from etcd")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   etcd::Response resp = etcd.get("/test/key1").get();
   CHECK("get" == resp.action());
   REQUIRE(resp.is_ok());
@@ -41,14 +43,14 @@ TEST_CASE("read a value from etcd")
 
 TEST_CASE("simplified read")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   CHECK("42" == etcd.get("/test/key1").get().value().as_string());
   CHECK(100  == etcd.get("/test/key2").get().error_code()); // Key not found
 }
 
 TEST_CASE("modify a key")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   etcd::Response resp = etcd.modify("/test/key1", "43").get();
   REQUIRE(0 == resp.error_code()); // overwrite
   CHECK("update" == resp.action());
@@ -58,7 +60,7 @@ TEST_CASE("modify a key")
 
 TEST_CASE("set a key")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   etcd::Response resp = etcd.set("/test/key1", "43").get();
   REQUIRE(0  == resp.error_code()); // overwrite
   CHECK("set" == resp.action());
@@ -70,7 +72,7 @@ TEST_CASE("set a key")
 
 TEST_CASE("delete a value")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   CHECK(3 == etcd.ls("/test").get().keys().size());
   etcd::Response resp = etcd.rm("/test/key1").get();
   CHECK("43" == resp.prev_value().as_string());
@@ -80,7 +82,7 @@ TEST_CASE("delete a value")
 
 TEST_CASE("create a directory")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   etcd::Response resp = etcd.mkdir("/test/new_dir").get();
   CHECK("set" == resp.action());
   CHECK(resp.value().is_dir());
@@ -88,7 +90,7 @@ TEST_CASE("create a directory")
 
 TEST_CASE("list a directory")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   CHECK(0 == etcd.ls("/test/new_dir").get().keys().size());
 
   etcd.set("/test/new_dir/key1", "value1").wait();
@@ -110,14 +112,14 @@ TEST_CASE("list a directory")
 
 TEST_CASE("delete a directory")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   CHECK(108 == etcd.rmdir("/test/new_dir").get().error_code()); // Directory not empty
   CHECK(0 == etcd.rmdir("/test/new_dir", true).get().error_code());
 }
 
 TEST_CASE("wait for a value change")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   etcd.set("/test/key1", "42").wait();
 
   pplx::task<etcd::Response> res = etcd.watch("/test/key1");
@@ -134,7 +136,7 @@ TEST_CASE("wait for a value change")
 
 TEST_CASE("wait for a directory change")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
 
   pplx::task<etcd::Response> res = etcd.watch("/test", true);
   CHECK(!res.is_done());
@@ -161,7 +163,7 @@ TEST_CASE("wait for a directory change")
 
 TEST_CASE("watch changes in the past")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
 
   int index = etcd.set("/test/key1", "42").get().index();
 
@@ -184,7 +186,7 @@ TEST_CASE("watch changes in the past")
 
 TEST_CASE("atomic compare-and-swap")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   etcd.set("/test/key1", "42").wait();
 
   // modify success
@@ -215,7 +217,7 @@ TEST_CASE("atomic compare-and-swap")
 
 TEST_CASE("atomic compare-and-delete based on prevValue")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   etcd.set("/test/key1", "42").wait();
 
   etcd::Response res = etcd.rm_if("/test/key1", "43").get();
@@ -231,7 +233,7 @@ TEST_CASE("atomic compare-and-delete based on prevValue")
 
 TEST_CASE("atomic compare-and-delete based on prevIndex")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   int index = etcd.set("/test/key1", "42").get().index();
 
   etcd::Response res = etcd.rm_if("/test/key1", index - 1).get();
@@ -247,14 +249,14 @@ TEST_CASE("atomic compare-and-delete based on prevIndex")
 
 TEST_CASE("cleanup")
 {
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   REQUIRE(0 == etcd.rmdir("/test", true).get().error_code());
 }
 
 TEST_CASE("auto cancel watch tasks on exit")
 {
   // watch for a non existing key should never return
-  etcd::Client etcd("http://127.0.0.1:4001");
+  etcd::Client etcd(etcd_server);
   pplx::task<etcd::Response> res = etcd.watch("/noexist");
   sleep(1);
   CHECK(!res.is_done());
