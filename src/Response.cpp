@@ -4,8 +4,17 @@
 pplx::task<etcd::Response> etcd::Response::create(pplx::task<web::http::http_response> response_task)
 {
   return pplx::task<etcd::Response> ([response_task](){
-      auto json_task = response_task.get().extract_json();
-      return etcd::Response(response_task.get(), json_task.get());
+      std::shared_ptr<int> index = std::make_shared<int>(0);
+      return response_task
+        .then([index](web::http::http_response http_response){
+            if (http_response.headers().has(JSON_ETCD_INDEX)) {
+              *index = atoi(http_response.headers()[JSON_ETCD_INDEX].c_str());
+            }
+            return http_response.extract_json();
+          })
+        .then([index](web::json::value json_value){
+            return etcd::Response(*index, json_value);
+          });
     });
 }
 
@@ -15,13 +24,10 @@ etcd::Response::Response()
 {
 }
 
-etcd::Response::Response(web::http::http_response http_response, web::json::value json_value)
+etcd::Response::Response(int index, web::json::value json_value)
   : _error_code(0),
-    _index(0)
+    _index(index)
 {
-  if (http_response.headers().has(JSON_ETCD_INDEX))
-    _index = atoi(http_response.headers()[JSON_ETCD_INDEX].c_str());
-
   if (json_value.has_field(JSON_ERROR_CODE))
   {
     _error_code = json_value[JSON_ERROR_CODE].as_number().to_int64();

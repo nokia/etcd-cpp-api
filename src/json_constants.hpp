@@ -15,6 +15,6 @@ namespace etcd
   extern char const * JSON_NODES;
   extern char const * JSON_PREV_NODE;
   extern char const * JSON_ETCD_INDEX;
-};
+}
 
 #endif

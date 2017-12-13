@@ -5,21 +5,26 @@ etcd::Client::Client(std::string const & address)
 {
 }
 
+etcd::Client::~Client()
+{
+  cancel();
+}
+
 pplx::task<etcd::Response> etcd::Client::send_get_request(web::http::uri_builder & uri)
 {
-  return Response::create(client.request(web::http::methods::GET, uri.to_string()));
+  return Response::create(client.request(web::http::methods::GET, uri.to_string(), _cts.get_token()));
 }
 
 pplx::task<etcd::Response> etcd::Client::send_del_request(web::http::uri_builder & uri)
 {
-  return Response::create(client.request(web::http::methods::DEL, uri.to_string()));
+  return Response::create(client.request(web::http::methods::DEL, uri.to_string(), _cts.get_token()));
 }
 
 pplx::task<etcd::Response> etcd::Client::send_put_request(web::http::uri_builder & uri, std::string const & key, std::string const & value)
 {
   std::string data = key + "=" + value;
   std::string content_type = "application/x-www-form-urlencoded; param=" + key;
-  return Response::create(client.request(web::http::methods::PUT, uri.to_string(), data.c_str(), content_type.c_str()));
+  return Response::create(client.request(web::http::methods::PUT, uri.to_string(), data.c_str(), content_type.c_str(), _cts.get_token()));
 }
 
 pplx::task<etcd::Response> etcd::Client::get(std::string const & key)
@@ -66,7 +71,7 @@ pplx::task<etcd::Response> etcd::Client::rm(std::string const & key)
 {
   web::http::uri_builder uri("/v2/keys" + key);
   uri.append_query("dir=false");
-  return Response::create(client.request("DELETE", uri.to_string()));
+  return Response::create(client.request("DELETE", uri.to_string(), _cts.get_token()));
 }
 
 pplx::task<etcd::Response> etcd::Client::rm_if(std::string const & key, std::string const & old_value)
@@ -124,4 +129,8 @@ pplx::task<etcd::Response> etcd::Client::watch(std::string const & key, int from
   if (recursive)
     uri.append_query("recursive=true");
   return send_get_request(uri);
+}
+
+void etcd::Client::cancel() {
+  _cts.cancel();
 }
